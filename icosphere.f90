@@ -11,7 +11,7 @@
 !**********************************************************************!
 IMPLICIT NONE
 !-----------------------------------------------------------------------------------------------------------------------------------
-INTEGER                   :: i, j, k, l, m, order, nver, nverb
+INTEGER                   :: i, j, k, l, order, nver, nverb
 REAL(KIND=8)              :: golden, radius, edgeanal, norma, disatorder, dis
 REAL(KIND=8)              :: centred(3), diff(3), midPoint(3)
 REAL(KIND=8), ALLOCATABLE :: vertex(:,:)
@@ -48,13 +48,11 @@ DO i = 1, order
       diff = vertex(:,j) - vertex(:,k)
       dis  = DSQRT(DOT_PRODUCT(diff,diff))
       IF (dis .LT. disatorder) THEN
-        m           = m + 1
         l           = l + 1
         midPoint(:) = vertex(:,j) + vertex(:,k)
         norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
         vertex(:,l) = radius*midPoint(:)/norma
       ENDIF
-      IF (m .EQ. 5) EXIT
     ENDDO
   ENDDO
   diff     = vertex(:,1) - vertex(:,nverb+1)
