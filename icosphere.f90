@@ -1,4 +1,4 @@
-                           PROGRAM icospehre
+                           PROGRAM icosphere
 !**********************************************************************!
 !   This program computes icospheres at any order.                     !
 !   This is not the most efficient way to know in which points the     !
