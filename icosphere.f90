@@ -12,7 +12,7 @@
 IMPLICIT NONE
 !-----------------------------------------------------------------------------------------------------------------------------------
 INTEGER                   :: i, j, k, l, m, n, order, nver, nverb, nedges, nedgesb, nfaces, vera, verb, verc, nvertb, nfacesb
-INTEGER, ALLOCATABLE      :: edges(:,:), atvertex(:,:)
+INTEGER, ALLOCATABLE      :: edges(:,:), atvertex(:,:), auxfaces(:,:)
 REAL(KIND=8)              :: golden, radius, edgeanal, norma, disatorder, dis
 REAL(KIND=8)              :: centred(3), diff(3), midPoint(3)
 REAL(KIND=8), ALLOCATABLE :: vertex(:,:), expvert(:,:), faces(:,:)
@@ -29,7 +29,7 @@ nfaces   = 20*4**order
 edgeanal = 2.d0
 ALLOCATE(vertex(3,nver), expvert(3,nver), faces(3,nfaces), edges(2,nedges)); vertex = 0.d0
 ALLOCATE(atvertex(2,nver), edgecomputed(2,nver)); edgecomputed = .FALSE.; atvertex = 0
-ALLOCATE(auxface(3,nfaces))
+ALLOCATE(auxfaces(3,nfaces))
 !  At order zero, i. e., icosahedron;
 ! (0, ±1, ±φ); (±1, ±φ, 0); (±φ, 0, ±1)
 vertex(:, 1) = (/0.d0,  1.d0,  golden/)
@@ -53,31 +53,87 @@ faces(:,19) = [6, 8, 10]; faces(:,20) = [6, 8, 12]
 
 expvert = vertex
 DO i = 1, order
-  nfacesb = 20*4**(i-1)
   nvertb  = 10*4**(i-1) + 2
-  k       = nvertb  + 1
-  l       = nfacesb + 1
-  auxface = faces
+  nfacesb = 20*4**(i-1)
+  nedgesb = 30*4**(i-1)
+  k       = nvertb
+  l       = nfacesb
+  auxfaces(:,nfacesb) = faces(:,nfacesb)
   DO j = 1, nfacesb
     vera = faces(1,j); verb = faces(2,j); verc = faces(3,j)
-    vera = auxface(1,j); verb = auxface(2,j); verc = auxface(3,j)
-    midPoint(:)  = expvert(:,vera) + expvert(:,verb)
-    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-    expvert(:,k) = radius*midPoint(:)/norma
-    faces(2,j)   = k; k = k + 1
-    midPoint(:)  = expvert(:,vera) + expvert(:,verc)
-    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-    expvert(:,k) = radius*midPoint(:)/norma
-    faces(3,j)   = k; k = k + 1
-    midPoint(:)  = expvert(:,verb) + expvert(:,verc)
-    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-    expvert(:,k) = radius*midPoint(:)/norma
-    faces(1,l)   = faces(2,j); faces(2,l) = verb; faces(3,l) = k;         l = l + 1
-    faces(1,l)   = faces(3,j); faces(2,l) = k;    faces(3,l) = verc;      l = l + 1
-    faces(1,l)   = faces(2,j); faces(2,l) = k;    faces(3,l) = faces(3,j)
-    k = k + 1; l = l + 1
+    IF (edgecomputed(vera,verb)) THEN
+      verd = atvertex(vera,verb)
+    ELSE
+      midPoint(:) = expvert(:,vera) + expvert(:,verb)
+      norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
+      k = k + 1; verd = k
+      expvert(:,verd) = radius*midPoint(:)/norma
+      edgecomputed(vera,verb) = .TRUE.
+      edgecomputed(verb,vera) = .TRUE.
+      atvertex(vera,verb) = verd
+      atvertex(verb,vera) = verd
+    ENDIF
+    IF (edgecomputed(verb,verc)) THEN
+      vere = atvertex(verb,verc)
+    ELSE
+      midPoint(:) = expvert(:,verb) + expvert(:,vera)
+      norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
+      k = k + 1; vere = k
+      expvert(:,vere) = radius*midPoint(:)/norma
+      edgecomputed(verb,verc) = .TRUE.
+      edgecomputed(verc,verb) = .TRUE.
+      atvertex(verb,verc) = vere
+      atvertex(verc,verb) = vere
+    ENDIF
+    IF (edgecomputed(vera,verc)) THEN
+      verf = atvertex(vera,verc)
+    ELSE
+      midPoint(:) = expvert(:,vera) + expvert(:,verc)
+      norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
+      k = k + 1; verf = k
+      expvert(:,verf) = radius*midPoint(:)/norma
+      edgecomputed(vera,verc) = .TRUE.
+      edgecomputed(verc,vera) = .TRUE.
+      atvertex(vera,verc) = verf
+      atvertex(verc,vera) = verf
+    ENDIF
+    ! Actualise the triangles
+    faces(2,j) = verd; faces(3,j) = verf;                    l = l + 1
+    faces(1,l) = verd; faces(2,l) = verb; faces(3,l) = vere; l = l + 1
+    faces(1,l) = verf; faces(2,l) = vere; faces(3,l) = verc; l = l + 1
+    faces(1,l) = verd; faces(2,l) = vere; faces(3,l) = verf; l = l + 1
   ENDDO
 ENDDO
+!DO i = 1, order
+!  nfacesb = 20*4**(i-1)
+!  nvertb  = 10*4**(i-1) + 2
+!  k       = nvertb  + 1
+!  l       = nfacesb + 1
+!  auxface = faces
+!  DO j = 1, nfacesb
+!    vera = faces(1,j); verb = faces(2,j); verc = faces(3,j)
+!    vera = auxface(1,j); verb = auxface(2,j); verc = auxface(3,j)
+!    IF (edgecomputed(vera,verb)) THEN
+!      faces(2,j) = atvertex(vera,verb)
+!    ELSE
+!      midPoint(:)  = expvert(:,vera) + expvert(:,verb)
+!      norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
+!      expvert(:,k) = radius*midPoint(:)/norma
+!      faces(2,j)   = k; k = k + 1
+!    ENDIF
+!    midPoint(:)  = expvert(:,vera) + expvert(:,verc)
+!    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
+!    expvert(:,k) = radius*midPoint(:)/norma
+!    faces(3,j)   = k; k = k + 1
+!    midPoint(:)  = expvert(:,verb) + expvert(:,verc)
+!    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
+!    expvert(:,k) = radius*midPoint(:)/norma
+!    faces(1,l)   = faces(2,j); faces(2,l) = verb; faces(3,l) = k;         l = l + 1
+!    faces(1,l)   = faces(3,j); faces(2,l) = k;    faces(3,l) = verc;      l = l + 1
+!    faces(1,l)   = faces(2,j); faces(2,l) = k;    faces(3,l) = faces(3,j)
+!    k = k + 1; l = l + 1
+!  ENDDO
+!ENDDO
 
 DO i = 1, order
   nverb      = 10*4**(i-1) +2
