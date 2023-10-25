@@ -11,24 +11,26 @@
 !**********************************************************************!
 IMPLICIT NONE
 !-----------------------------------------------------------------------------------------------------------------------------------
-INTEGER                   :: i, j, k, l, m, n, order, nver, nverb, nedges, nedgesb, nfaces, vera, verb, verc, nvertb, nfacesb
-INTEGER, ALLOCATABLE      :: edges(:,:), atvertex(:,:), auxfaces(:,:)
-REAL(KIND=8)              :: golden, radius, edgeanal, norma, disatorder, dis
+INTEGER                   :: i, j, k, l, m, n, order, nver, nverb, nedges, nedgesb, nfaces, nvertb, nfacesb
+INTEGER                   :: vera, verb, verc, verd, vere, verf
+INTEGER, ALLOCATABLE      :: edges(:,:), atvertex(:,:), auxfaces(:,:), faces(:,:)
+REAL(KIND=8)              :: golden, radius, edgeanal, norma, disatorder, dis, timestart, timeend
 REAL(KIND=8)              :: centred(3), diff(3), midPoint(3)
-REAL(KIND=8), ALLOCATABLE :: vertex(:,:), expvert(:,:), faces(:,:)
+REAL(KIND=8), ALLOCATABLE :: vertex(:,:), expvert(:,:)
 LOGICAL                   :: found, matrices_are_equal
 LOGICAL, ALLOCATABLE      :: already_checked(:), edgecomputed(:,:)
 !-----------------------------------------------------------------------------------------------------------------------------------
 
-order    = 3! The order we want
+order    = 7! The order we want
 golden   = 0.5d0*(1.d0 + DSQRT(5.d0))
 radius   = DSQRT(2.d0 + golden)
 nver     = 10*4**order + 2
 nedges   = 30*4**order
 nfaces   = 20*4**order
 edgeanal = 2.d0
+WRITE(*,*) nver, nedges, nfaces
 ALLOCATE(vertex(3,nver), expvert(3,nver), faces(3,nfaces), edges(2,nedges)); vertex = 0.d0
-ALLOCATE(atvertex(2,nver), edgecomputed(2,nver)); edgecomputed = .FALSE.; atvertex = 0
+ALLOCATE(atvertex(nver,nver), edgecomputed(nver,nver)); atvertex = 0
 ALLOCATE(auxfaces(3,nfaces))
 !  At order zero, i. e., icosahedron;
 ! (0, ±1, ±φ); (±1, ±φ, 0); (±φ, 0, ±1)
@@ -51,14 +53,14 @@ faces(:,14) = [4, 7, 11]; faces(:,15) = [4, 8, 12]; faces(:,16) = [4, 11, 12]
 faces(:,17) = [5, 7,  9]; faces(:,18) = [5, 7, 11]
 faces(:,19) = [6, 8, 10]; faces(:,20) = [6, 8, 12]
 
-expvert = vertex
+expvert = vertex; edgecomputed = .FALSE.
+CALL CPU_TIME(timestart)
 DO i = 1, order
   nvertb  = 10*4**(i-1) + 2
   nfacesb = 20*4**(i-1)
   nedgesb = 30*4**(i-1)
-  k       = nvertb
-  l       = nfacesb
-  auxfaces(:,nfacesb) = faces(:,nfacesb)
+  k       = nvertb  + 1
+  l       = nfacesb + 1
   DO j = 1, nfacesb
     vera = faces(1,j); verb = faces(2,j); verc = faces(3,j)
     IF (edgecomputed(vera,verb)) THEN
@@ -66,7 +68,7 @@ DO i = 1, order
     ELSE
       midPoint(:) = expvert(:,vera) + expvert(:,verb)
       norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-      k = k + 1; verd = k
+      verd = k; k = k + 1
       expvert(:,verd) = radius*midPoint(:)/norma
       edgecomputed(vera,verb) = .TRUE.
       edgecomputed(verb,vera) = .TRUE.
@@ -76,9 +78,9 @@ DO i = 1, order
     IF (edgecomputed(verb,verc)) THEN
       vere = atvertex(verb,verc)
     ELSE
-      midPoint(:) = expvert(:,verb) + expvert(:,vera)
+      midPoint(:) = expvert(:,verb) + expvert(:,verc)
       norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-      k = k + 1; vere = k
+      vere = k; k = k + 1
       expvert(:,vere) = radius*midPoint(:)/norma
       edgecomputed(verb,verc) = .TRUE.
       edgecomputed(verc,verb) = .TRUE.
@@ -90,7 +92,7 @@ DO i = 1, order
     ELSE
       midPoint(:) = expvert(:,vera) + expvert(:,verc)
       norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-      k = k + 1; verf = k
+      verf = k; k = k + 1
       expvert(:,verf) = radius*midPoint(:)/norma
       edgecomputed(vera,verc) = .TRUE.
       edgecomputed(verc,vera) = .TRUE.
@@ -98,43 +100,16 @@ DO i = 1, order
       atvertex(verc,vera) = verf
     ENDIF
     ! Actualise the triangles
-    faces(2,j) = verd; faces(3,j) = verf;                    l = l + 1
+    faces(2,j) = verd; faces(3,j) = verf
     faces(1,l) = verd; faces(2,l) = verb; faces(3,l) = vere; l = l + 1
     faces(1,l) = verf; faces(2,l) = vere; faces(3,l) = verc; l = l + 1
     faces(1,l) = verd; faces(2,l) = vere; faces(3,l) = verf; l = l + 1
   ENDDO
 ENDDO
-!DO i = 1, order
-!  nfacesb = 20*4**(i-1)
-!  nvertb  = 10*4**(i-1) + 2
-!  k       = nvertb  + 1
-!  l       = nfacesb + 1
-!  auxface = faces
-!  DO j = 1, nfacesb
-!    vera = faces(1,j); verb = faces(2,j); verc = faces(3,j)
-!    vera = auxface(1,j); verb = auxface(2,j); verc = auxface(3,j)
-!    IF (edgecomputed(vera,verb)) THEN
-!      faces(2,j) = atvertex(vera,verb)
-!    ELSE
-!      midPoint(:)  = expvert(:,vera) + expvert(:,verb)
-!      norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-!      expvert(:,k) = radius*midPoint(:)/norma
-!      faces(2,j)   = k; k = k + 1
-!    ENDIF
-!    midPoint(:)  = expvert(:,vera) + expvert(:,verc)
-!    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-!    expvert(:,k) = radius*midPoint(:)/norma
-!    faces(3,j)   = k; k = k + 1
-!    midPoint(:)  = expvert(:,verb) + expvert(:,verc)
-!    norma        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
-!    expvert(:,k) = radius*midPoint(:)/norma
-!    faces(1,l)   = faces(2,j); faces(2,l) = verb; faces(3,l) = k;         l = l + 1
-!    faces(1,l)   = faces(3,j); faces(2,l) = k;    faces(3,l) = verc;      l = l + 1
-!    faces(1,l)   = faces(2,j); faces(2,l) = k;    faces(3,l) = faces(3,j)
-!    k = k + 1; l = l + 1
-!  ENDDO
-!ENDDO
+CALL CPU_TIME(timeend)
+WRITE(*,*) timeend-timestart
 
+CALL CPU_TIME(timestart)
 DO i = 1, order
   nverb      = 10*4**(i-1) +2
   disatorder = 1.2d0*edgeanal
@@ -154,6 +129,8 @@ DO i = 1, order
   diff     = vertex(:,1) - vertex(:,nverb+1)
   edgeanal = DSQRT(DOT_PRODUCT(diff,diff))
 ENDDO
+CALL CPU_TIME(timeend)
+WRITE(*,*) timeend-timestart
 
 allocate(already_checked(SIZE(vertex,2)))
 matrices_are_equal = .TRUE.; already_checked = .FALSE.
@@ -189,7 +166,10 @@ CLOSE(13)
 OPEN(14, FILE='expvert.xyz')
     WRITE(UNIT=14,FMT=*) SIZE(EXPVERT,2)
     WRITE(UNIT=14,FMT=*) 
-    DO I = 1, SIZE(EXPVERT,2)
+    DO I = 1, 12
+        WRITE(UNIT=14,FMT='(A,3(F9.4))') 'He', EXPVERT(:,I)
+    ENDDO
+    DO I = 13, SIZE(EXPVERT,2)
         WRITE(UNIT=14,FMT='(A,3(F9.4))') 'H', EXPVERT(:,I)
     ENDDO
 CLOSE(14)
