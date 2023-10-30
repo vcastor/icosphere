@@ -9,7 +9,7 @@
 !**********************************************************************!
 IMPLICIT NONE
 !----------------------------------------------------------------------!
-INTEGER                   :: i, j, k, l, order, nver, nverb, nvertb
+INTEGER                   :: i, j, k, l, order, nver, nverb
 REAL(KIND=8)              :: golden, radius, edgeanal, norma
 REAL(KIND=8)              :: disatorder, dis, timestart, timeend
 REAL(KIND=8)              :: diff(3), midPoint(3)
@@ -50,6 +50,7 @@ DO i = 1, order
       IF (dis .LT. disatorder) THEN
         l           = l + 1
         midPoint(:) = vertex(:,j) + vertex(:,k)
+        norma       = DSQRT(DOT_PRODUCT(midPoint,midPoint))
         vertex(:,l) = radius*midPoint(:)/norma
       ENDIF
     ENDDO

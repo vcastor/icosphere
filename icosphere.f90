@@ -21,7 +21,6 @@ LOGICAL,      ALLOCATABLE :: edgecomputed(:,:)
 READ(*,*)  order
 golden   = 0.5d0*(1.d0 + DSQRT(5.d0))
 radius   = DSQRT(2.d0 + golden)
-norma    = 2.d0*golden
 nver     = 10*4**order + 2
 nfaces   = 20*4**order
 ALLOCATE(vertex(3,nver), faces(3,nfaces)); vertex = 0.d0
@@ -47,6 +46,7 @@ faces(:,14) = [4, 7, 11]; faces(:,15) = [4, 8, 12]; faces(:,16) = [4, 11, 12]
 faces(:,17) = [5, 7,  9]; faces(:,18) = [5, 7, 11]
 faces(:,19) = [6, 8, 10]; faces(:,20) = [6, 8, 12]
 
+norma = DSQRT(DOT_PRODUCT(vertex(:,1)+vertex(:,2),vertex(:,1)+vertex(:,2)))
 CALL CPU_TIME(timestart)
 DO i = 1, order
   nvertb  = 10*4**(i-1) + 2
@@ -65,6 +65,7 @@ DO i = 1, order
     faces(1,l) = verf; faces(2,l) = vere; faces(3,l) = verc; l = l + 1
     faces(1,l) = verd; faces(2,l) = vere; faces(3,l) = verf; l = l + 1
   ENDDO
+  norma   = DSQRT(DOT_PRODUCT(vertex(:,verf)+vertex(:,verd),vertex(:,verf)+vertex(:,verd)))
 ENDDO
 CALL CPU_TIME(timeend)
 WRITE(*,*) timeend-timestart
@@ -76,13 +77,16 @@ SUBROUTINE get_vertexn(verx, very, verz, k, edgecomputed, atvertex, vertex, norm
   INTEGER, INTENT(INOUT)      :: k
   INTEGER, INTENT(INOUT)      :: atvertex(:,:)
   LOGICAL, INTENT(INOUT)      :: edgecomputed(:,:)
-  REAL(KIND=8), INTENT(IN)    :: norm, radi
+  REAL(KIND=8), INTENT(IN)    :: radi
+  REAL(KIND=8), INTENT(IN)   :: norm
+  !REAL(KIND=8), INTENT(OUT)   :: norm
   REAL(KIND=8), INTENT(INOUT) :: vertex(:,:)
 
   IF (edgecomputed(verx,very)) THEN
     verz = atvertex(verx,very)
   ELSE
     midPoint(:) = vertex(:,verx) + vertex(:,very)
+    !norm        = DSQRT(DOT_PRODUCT(midPoint,midPoint))
     verz = k; k = k + 1
     vertex(:,verz) = radi*midPoint(:)/norm
     edgecomputed(verx,very) = .TRUE.
