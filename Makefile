@@ -1,13 +1,23 @@
-gg = gfortran
-FLAG = -fcheck=all -Wall -O3
-TARGETS = icosphere.exe brute_force.exe
+#Makefile
 
-all: $(TARGETS)
+ALL=$(wildcard *.tex */*.tex bibl/*.bib)
+MAIN=homework.tex
+LATEX=pdflatex
+SHELL=/bin/zsh
+PYTHON=python3
+PYPLOT=$(wildcard ./img/*.py)
 
-SRCF90 = $(wildcard *.f90)
+all: plots tex
 
-%.exe: %.f90
-	$(gg) $(FLAG) $< -o $@
+plots:                            ## Build python plots
+	$(foreach var,$(PYPLOT),$(PYTHON) $(var);)
+
+tex:                               ## here we go! 🥳
+	$(LATEX) $(MAIN)                # main run
+	bibtex $(MAIN:.tex=)            # bibliography
+	makeglossaries $(MAIN:.tex=)    # list of abbreviations, nomenclature
+	$(LATEX) $(MAIN)
+	$(LATEX) $(MAIN)
 
 clean:
-	rm -f *.exe *.o
+	rm -rf *.aux *.bbl *.blg *.glg *.glo *.gls *.ist *.log *.not *.ntt *.out *.sbl *.sym *.tld *.toc */*.aux

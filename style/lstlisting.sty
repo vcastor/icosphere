@@ -1,0 +1,91 @@
+% Source: ss17_wissschreib (Eva)
+
+\lstset{
+   basicstyle=\ttfamily\scriptsize\mdseries,
+   keywordstyle=\bfseries\color[HTML]{2c3e50},
+   identifierstyle=,
+   %commentstyle=\color[HTML]{3498db},  
+   %stringstyle=\color[HTML]{2980b9},
+   numbers=left,
+   numberstyle=\tiny,
+   stepnumber=1,
+   breaklines=true,
+   frame=none,
+   showstringspaces=false,
+   tabsize=4,
+   backgroundcolor=\color[HTML]{ecf0f1},
+   captionpos=b,
+   float=htbp,
+   language=Python,
+   xleftmargin=15pt,
+   xrightmargin=15pt
+} 
+
+\lstset{literate=%
+%  (español)
+  {á}{{\'a}}1
+  {é}{{\'e}}1
+  {í}{{\'{i}}}1
+  {ó}{{\'o}}1
+  {ú}{{\'u}}1
+  {ü}{{\"u}}1
+  {ñ}{{\~{n}}}1
+  {Á}{{\'A}}1
+  {É}{{\'E}}1
+  {Í}{{\'{I}}}1
+  {Ó}{{\'O}}1
+  {Ú}{{\'U}}1
+  {Ü}{{\"U}}1
+  {Ñ}{{\~{N}}}1
+%  (català)
+  {à}{{\`a}}1
+  {è}{{\`e}}1
+  {ò}{{\`o}}1
+  {À}{{\`A}}1
+  {È}{{\`E}}1
+  {Ò}{{\`O}}1
+%  áé... alredy up
+%  (deutch)
+  {Ä}{{\"A}}1
+  {Ö}{{\"O}}1
+  {ä}{{\"a}}1
+  {ö}{{\"o}}1
+  {ß}{{\ss}}1
+%  üÜ already up
+%  (porgues)
+  {Â}{{\^A}}1
+  {Ê}{{\^E}}1
+  {Î}{{\^I}}1
+  {Ô}{{\^O}}1
+  {Û}{{\^U}}1
+  {Ã}{{\~A}}1
+  {Õ}{{\~O}}1
+  {Ç}{{\c{C}}}1
+  {â}{{\^a}}1
+  {ê}{{\^e}}1
+  {î}{{\^i}}1
+  {ô}{{\^o}}1
+  {û}{{\^u}}1
+  {ã}{{\~a}}1
+  {õ}{{\~o}}1
+  {ç}{{\c{c}}}1
+%  (french)
+  {Œ}{{\OE}}1
+  {Ë}{{\"E}}1
+  {Ï}{{\"I}}1
+%  {Ü}{{\"U}}1
+  {œ}{{\oe}}1
+  {ë}{{\"e}}1
+  {ï}{{\"i}}1
+%  {ü}{{\"u}}1
+  {à}{{\`a}}1
+  {è}{{\`e}}1
+  {ì}{{\`i}}1
+  {ò}{{\`o}}1
+  {ù}{{\`u}}1
+  {'}{{\textquotesingle}}1
+}
+%Verwendung im Text:
+%-> \begin{lstlisting}[language=Python,firstnumber=27] ... \end{lstlisting}
+%-> \begin{lstlisting}[language=Python,numbers=none] ... \end{lstlisting}
+%-> \lstinline[language=JAVA]{...}
